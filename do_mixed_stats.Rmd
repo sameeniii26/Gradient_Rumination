@@ -1,0 +1,75 @@
+---
+title: "do_stats"
+output: html_document
+date: "2025-06-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## do stats, mixed effect analysis on the gradient metrics
+
+```{r}
+library(afex)
+library(lme4)
+library(lmerTest)
+library(readxl)
+work_dir <- "/Users/apurplespoon/Desktop/UCAS/YanLab/Suzhou_Rumination/Revise/GradMetrix"
+df <- read_excel(paste(work_dir, "/RumSuzhou.xlsx", sep = ""))
+df$sub_idx <- factor(df$sub_idx)
+df$group <- factor(df$group)
+df$condition <- factor(df$condition)
+df$head_motion <- as.numeric(df$head_motion)
+```
+
+## do mixed effect analysis, using ancova
+
+```{}
+```
+
+## try using LME
+
+```{r}
+df$group <- relevel(df$group, ref = "2") 
+df$condition <- relevel(df$condition, ref = "2") 
+model <- lmer(G2_ExR ~ group * condition + head_motion + (1|sub_idx), data = df)
+library(lme4)
+
+# 拟合完整模型（包含所有主效应和交互项）
+full_model <- lmer(G2_ExR ~ group * condition + head_motion + (1 | sub_idx), 
+                   data = df, REML = FALSE)
+
+# 计算 RSS 的函数
+rss <- function(model) sum(residuals(model)^2)
+
+# 1️⃣ 计算 group 的 Cohen's f²
+model_no_group <- lmer(G2_ExR ~ condition + head_motion + (1 | sub_idx), 
+                       data = df, REML = FALSE)
+rss_full <- rss(full_model)
+rss_group <- rss(model_no_group)
+r2_group <- (rss_group - rss_full) / rss_group
+f2_group <- r2_group / (1 - r2_group)
+
+# 2️⃣ 计算 condition 的 Cohen's f²
+model_no_condition <- lmer(G2_ExR ~ group + head_motion + (1 | sub_idx), 
+                           data = df, REML = FALSE)
+rss_condition <- rss(model_no_condition)
+r2_condition <- (rss_condition - rss_full) / rss_condition
+f2_condition <- r2_condition / (1 - r2_condition)
+
+# 3️⃣ 计算交互项 group:condition 的 Cohen's f²
+model_no_interaction <- lmer(G2_ExR ~ group + condition + head_motion + (1 | sub_idx), 
+                             data = df, REML = FALSE)
+rss_interaction <- rss(model_no_interaction)
+r2_interaction <- (rss_interaction - rss_full) / rss_interaction
+f2_interaction <- r2_interaction / (1 - r2_interaction)
+
+# ✅ 打印所有结果
+cat("✅ Cohen's f²:\n")
+cat(" - group:             ", round(f2_group, 4), "\n")
+cat(" - condition:         ", round(f2_condition, 4), "\n")
+cat(" - group*condition:   ", round(f2_interaction, 4), "\n")
+
+summary(model)
+```

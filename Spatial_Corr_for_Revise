@@ -1,0 +1,11 @@
+import pandas as pd
+import numpy as np
+
+# maps
+map_df = pd.read_excel("maps.xlsx")
+x = map_df["map1"].to_numpy()
+y = map_df["map2"].to_numpy()
+
+# coords
+coord_df = pd.read_excel("coords.xlsx")
+coords = coord_df[["x", "y", "z"]].to_numpy()
